@@ -5,6 +5,20 @@ import {
   useEffect,
   useRef,
 } from "react";
+import styled from "styled-components";
+
+const CustomCheckbox = styled.input`
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+
+  &:checked {
+    color: #008060;
+    fill: #008060;
+    background: #008060;
+  }
+`;
 
 //   interface Props
 //     extends DetailedHTMLProps<
@@ -34,7 +48,7 @@ export const Checkbox = forwardRef(
   ({ indeterminate = false, type, ...inputProps }, ref) => {
     // We need our own internal ref to ensure that it is (a) actually defined,
     // and (b) an object ref rather than a callback ref.
-    const internalRef = useRef < HTMLInputElement;
+    const internalRef = useRef();
 
     // This function is a callback ref that will keep our internal ref and the
     // passed in ref synchronized.
@@ -61,6 +75,6 @@ export const Checkbox = forwardRef(
       }
     }, [indeterminate]);
 
-    return <input ref={synchronizeRefs} type="checkbox" {...inputProps} />;
+    return <CustomCheckbox ref={synchronizeRefs} type="checkbox" {...inputProps} />;
   },
 );

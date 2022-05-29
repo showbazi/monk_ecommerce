@@ -3,7 +3,8 @@ import styled from "styled-components";
 import useDebounce from "../hooks/useDebounce";
 import closeIcon from "../assets/images/close.svg";
 import searchIcon from "../assets/images/search.svg";
-import tickIcon from "../assets/images/tick.svg";
+// import tickIcon from "../assets/images/tick.svg";
+import Tree  from "./Checkbox/Tree";
 
 const DialogBackground = styled.div`
   position: absolute;
@@ -110,16 +111,16 @@ const MainCheckbox = styled.input`
   }
 `;
 
-const TickIcon = styled.img`
-  width: 14.4px;
-  height: 12px;
-  background: url(src\assets\images\tick.svg);
-  position: absolute;
-  top: 6px;
-  left: 5px;
-  color: red;
-  background-color: red;
-`;
+// const TickIcon = styled.img`
+//   width: 14.4px;
+//   height: 12px;
+//   background: url(src\assets\images\tick.svg);
+//   position: absolute;
+//   top: 6px;
+//   left: 5px;
+//   color: red;
+//   background-color: red;
+// `;
 
 const ProductsSubCardContainer = styled.ul``;
 
@@ -187,28 +188,35 @@ const ProductPicker = ({ closeDialog }) => {
               products.map((el, i) => {
                 return (
                   <ProductsCard key={el.id}>
-                    <MainCheckbox
+                    {/* <MainCheckbox
                       type="checkbox"
                       id={el.id}
                       onClick={() => setIsChecked(!isChecked)}
-                    />
-                    {isChecked && (
+                    /> */}
+                    {/* {isChecked && (
                       <TickIcon src={tickIcon} alt="tick Icon" id={el.id} />
-                    )}
-                    <span>{el.title}</span>
+                    )} */}
+                    {/* <span>{el.title}</span> */}
 
-                    {/* {el.variants?.length > 0 && (
+                    <Tree title ={el.title} length={el.length} image ={el.image} variants = {el.variants}/>
+
+                    {console.log("variants", el.variants)}
+
+{/* 
+                    {el.variants?.length > 0 && (
                       <ProductsSubCardContainer>
                         {el?.variants?.map((elVariants, i) => {
                           return (
                             <ProductsSubCard key={elVariants.id}>
                               <span>{elVariants.title}</span>
                               <span>{elVariants.price}</span>
+                              <Tree variants={elVariants} />
                             </ProductsSubCard>
                           );
                         })}
                       </ProductsSubCardContainer>
-                    )} */}
+                    )}
+                    <Tree /> */}
                   </ProductsCard>
                 );
               })}
