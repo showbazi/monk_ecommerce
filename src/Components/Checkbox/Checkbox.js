@@ -7,17 +7,12 @@ import {
 } from "react";
 import styled from "styled-components";
 
-const CustomCheckbox = styled.input`
+export const CustomCheckbox = styled.input`
+  opacity: 1;
   width: 24px;
   height: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
-
-  &:checked {
-    color: #008060;
-    fill: #008060;
-    background: #008060;
-  }
+  cursor: pointer;
+  /* position: absolute; */
 `;
 
 //   interface Props

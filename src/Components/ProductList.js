@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 // import { MdDragIndicator } from "react-icons/md";
 // import { FaPen } from "react-icons/fa";
 import Navbar from "./Navbar";
-import dragIndicator from "../assets/images/drag-indicator.svg";
-import editPen from "../assets/images/editPen.svg";
-import ProductPicker from "./ProductPicker";
+import ProductCardForList from "./ProductCardForList";
 
 //-------------------styles starts here-------------------------
 
@@ -29,12 +27,7 @@ const Heading = styled.h3`
   font-weight: 600;
   font-size: 16px;
   line-height: 24px;
-  /* identical to box height, or 150% */
-
-  /* Text/Default */
   color: #202223;
-
-  /* Inside auto layout */
   flex: none;
   order: 0;
   flex-grow: 0;
@@ -61,31 +54,26 @@ const ItemsList = styled.ul`
   width: max-content;
 `;
 
-const NoItemsCard = styled.li`
+export const ItemsCardContainer = styled.li`
+  display: flex;
+  flex-direction: column;
+`;
+
+export const ItemsCard = styled.div`
   display: flex;
   margin-top: 1rem;
   align-items: center;
-  margin-left: 2rem;
-  list-style: none;
+  margin-left: ${props => props.marginLeft};
   width: max-content;
 `;
 
-// const DragIndicatorIcon = styled.div`
-//     color: rgba(0, 0, 0, 0.5);
-//     font-size: 20px;
-//     display: flex;
-//     align-items: center;
-// `;
-
-const DragIndicator = styled.img`
+export const DragIndicator = styled.img`
   color: rgba(0, 0, 0, 0.5);
   font-size: 20px;
-  /* display: flex;
-    align-items: center; */
   cursor: pointer;
 `;
 
-const IndexNumber = styled.p`
+export const IndexNumber = styled.p`
   font-weight: 400;
   font-size: 14px;
   line-height: 16px;
@@ -93,27 +81,31 @@ const IndexNumber = styled.p`
   margin-left: 13px;
 `;
 
-const SelectProductButton = styled.div`
+export const SelectProductButton = styled.div`
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   padding-inline: 10px;
   height: 32px;
-  width: 215px;
+  width: ${props => props.width};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-left: 8px;
+  margin-left: ${props => props.marginLeft};
+  border-radius: ${props => props.borderRadius};
 `;
 
-const SelectProductButtonText = styled.span`
+export const SelectProductButtonText = styled.span`
   font-weight: 500;
   font-size: 14px;
   line-height: 21px;
-  color: rgba(0, 0, 0, 0.5);
+  color: ${prop => prop.color};
+  overflow: hidden;
+  max-height: 32px;
+  padding-block: ${prop => prop.paddingBlock};
 `;
 
-const EditPen = styled.img`
+export const EditPen = styled.img`
   color: rgba(0, 0, 0, 0.2);
   font-size: 14.2px;
   padding: 4px;
@@ -124,7 +116,7 @@ const EditPen = styled.img`
   }
 `;
 
-const AddDiscountBtn = styled.div`
+export const AddDiscountBtn = styled.div`
   background: #008060;
   border: 2px solid #008060;
   border-radius: 4px;
@@ -137,14 +129,14 @@ const AddDiscountBtn = styled.div`
   cursor: pointer;
 `;
 
-const AddDiscountBtnText = styled.span`
+export const AddDiscountBtnText = styled.span`
   font-weight: 400;
   line-height: 20px;
   font-size: 14px;
   color: #ffffff;
 `;
 
-const AddProductBtn = styled.div`
+export const AddProductBtn = styled.div`
   border: 2px solid #008060;
   border-radius: 4px;
   height: 48px;
@@ -152,29 +144,211 @@ const AddProductBtn = styled.div`
   width: max-content;
   display: flex;
   align-items: center;
-  margin-top: 21px;
-  margin-left: 15.3rem;
+  margin-top:  ${props => props.marginTop};
+  /* margin-left: 15.3rem; */
+  margin-left: ${props => props.marginLeft};
+  margin-bottom: 10rem;
   cursor: pointer;
 `;
 
-const AddProductBtnText = styled.span`
+export const AddProductBtnText = styled.span`
   font-weight: 600;
   font-size: 14px;
   line-height: 20px;
   color: #008060;
 `;
+
+const Divider = styled.div`
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 30px;
+`;
+
 //-------------------styles end here-------------------------
 
-const ProductList = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [items, setItems] = useState([]);
-  const [productName, setProductName] = useState("");
+const initialArrayContent ={
+  id: 1,
+  title: null,
+  variants: [],
+  isDiscountOpen: false,
+  isVariantShow: false
+}
 
+const initialDnDState = {
+  draggedFrom: null,
+  draggedTo: null,
+  isDragging: false,
+  originalOrder: [],
+  updatedOrder: []
+}
+
+
+const ProductList = () => {
+  
+  const [items, setItems] = useState([initialArrayContent]);
+  const [addDiscountBtnState, setAddDiscountBtnState] = useState(false);
+  const [isDiscountOpen, setIsDiscountOpen] = useState(false);
+
+  // tempState for the varaints of the product
+  const [tempState, setTempState] = useState([]);
+
+  const [dragAndDrop, setDragAndDrop] = useState( initialDnDState );
+  
+  // the state to get the final selected products and their variants
+  const [finalSelectedProducts, setFinalSelectedProducts] = useState([]);
+
+  // add item to the list with the blank content
   const addItem = () => {
-    const newItem = items.concat({ productName });
-    setItems(newItem);
+    const newArrayContent = {
+      id: items.length + 1,
+      title: "",
+      variants: [],
+      isDiscountOpen: false
+    }
+    setItems((prev) => [...prev , newArrayContent])
   };
 
+  const handleUpdateItem = (id) => {
+    const newItem = [...items];
+    const index = newItem.find(item => item.id === id);
+    const updatedItems = newItem.splice(id-1, 1, ...finalSelectedProducts);    
+    setItems(newItem);
+    setFinalSelectedProducts([]);
+  }
+
+  // handle the is discount open state
+  const handleDiscountOpen = (singleItem) => {
+    const newItem = [...items];
+    const index = newItem.findIndex(
+      (p) => p.id === singleItem.id
+    );
+    newItem[index].isDiscountOpen = !singleItem.isDiscountOpen;
+    setItems(newItem);
+    // to set the margin left for the add product button
+    const newDiscountStateArray = items.map((item) => item.isDiscountOpen)
+    console.log("newDiscountStateArray", newDiscountStateArray);
+    for (let i = 0; i < newDiscountStateArray.length; i++) {
+      if(newDiscountStateArray[i] === true){
+        setAddDiscountBtnState(true);
+      }
+    }
+    console.log("discount state", addDiscountBtnState);
+  }
+
+  // handle the delete of the item(product)
+  const handleDeleteItem = (singleItem) => {
+    const newItem = [...items]
+    const index = newItem.findIndex(
+      (p) => p.id === singleItem.id
+    );
+    console.log("index of deleted item", index);
+    if (index !== -1) {
+      newItem.splice(index, 1);
+   }
+   console.log("newItem of deleted item", newItem);
+   setItems(newItem);
+  };
+
+  // handle the delete of the variant
+  const handleDeleteVariant = (singleItem,variant) => {
+    const newItem = [...items]
+    const index = newItem.findIndex(
+      (p) => p.id === singleItem.id
+    );
+    if(index !== -1){
+      const newVariants = [...newItem[index].variants];
+      const indexOfVariant = newVariants.findIndex(
+        (p) => p.id === variant.id
+      );
+      newVariants.splice(indexOfVariant, 1);
+      newItem[index].variants = newVariants;
+      setItems(newItem);
+    }
+  }
+
+  // handle show or hide the variant
+  const handleVariantShow = (singleItem) => {
+    const newItem = [...items]
+    const index = newItem.findIndex(
+      (p) => p.id === singleItem.id
+    );
+    newItem[index].isVariantShow = !singleItem.isVariantShow;
+    setItems(newItem);
+  }
+
+  // -----------------------------------Drag and drop functions -----------------------------------
+  // onDragStart fires when an element
+  // starts being dragged
+  const DragStart = (event) => {
+      const initialPosition = Number(event.currentTarget.dataset.position);   
+      setDragAndDrop({
+        ...dragAndDrop,
+        draggedFrom: initialPosition,
+        isDragging: true,
+        originalOrder: items
+      });
+      //  Note: this is only for Firefox.
+      // Without it, the DnD won't work.
+      // But we are not using it.
+      event.dataTransfer.setData("text/html", '');
+  }
+
+
+   // onDragOver fires when an element being dragged
+  // enters a droppable area.
+  // In this case, any of the items on the list
+  const DragOver = (event) => {
+    
+    // in order for the onDrop
+    // event to fire, we have
+    // to cancel out this one
+    event.preventDefault();
+    
+    let newList = dragAndDrop.originalOrder;
+  
+    // index of the item being dragged
+    const draggedFrom = dragAndDrop.draggedFrom; 
+
+    // index of the droppable area being hovered
+    const draggedTo = Number(event.currentTarget.dataset.position); 
+
+    const itemDragged = newList[draggedFrom];
+    const remainingItems = newList.filter((item, index) => index !== draggedFrom);
+
+    newList = [
+      ...remainingItems.slice(0, draggedTo),
+      itemDragged,
+      ...remainingItems.slice(draggedTo)
+    ];
+
+    if (draggedTo !== dragAndDrop.draggedTo){
+      setDragAndDrop({
+       ...dragAndDrop,
+       updatedOrder: newList,
+       draggedTo: draggedTo
+      })
+     } 
+  }
+
+  const Drop = (event) => {
+    setItems(dragAndDrop.updatedOrder); 
+    setDragAndDrop({
+     ...dragAndDrop,
+     draggedFrom: null,
+     draggedTo: null,
+     isDragging: false
+    });
+  }
+
+  const DragLeave = () => {
+    setDragAndDrop({
+    ...dragAndDrop,
+    draggedTo: null
+   });
+  }
+
+
+
+  
   return (
     <>
       <Navbar />
@@ -193,41 +367,44 @@ const ProductList = () => {
           {/*------------------ No Items Card Starts here---------------------- */}
           <ItemsList>
             {items.map((item, index) => (
-              <NoItemsCard>
-                <DragIndicator src={dragIndicator} alt="drag indicator" />
-
-                <IndexNumber>{index + 1}.</IndexNumber>
-
-                <SelectProductButton>
-                  <SelectProductButtonText>
-                    {item.productName ? item.productName : "Select Product"}
-                  </SelectProductButtonText>
-
-                  <EditPen
-                    src={editPen}
-                    alt="edit pen"
-                    onClick={() => setIsDialogOpen(true)}
-                  />
-                </SelectProductButton>
-
-                <AddDiscountBtn>
-                  <AddDiscountBtnText>Add Discount</AddDiscountBtnText>
-                </AddDiscountBtn>
-              </NoItemsCard>
+              <>
+                <ProductCardForList 
+                    allItems={items}
+                    setAllItems={setItems}
+                    singleItem={item} 
+                    index={index} 
+                    finalSelectedProducts={finalSelectedProducts} 
+                    setFinalSelectedProducts={setFinalSelectedProducts} 
+                    handleUpdateItem={handleUpdateItem}  
+                    key={item.id} 
+                    isDiscountOpen={isDiscountOpen} 
+                    setIsDiscountOpen={setIsDiscountOpen} 
+                    handleDeleteItem={handleDeleteItem} 
+                    handleDiscountOpen={handleDiscountOpen} 
+                    handleDeleteVariant={handleDeleteVariant} 
+                    handleVariantShow={handleVariantShow}
+                    // handling the drag and drop functionalities
+                    DragStart={DragStart}
+                    DragOver={DragOver}
+                    Drop={Drop}
+                    DragLeave={DragLeave}
+                    // for varaints
+                    dragAndDrop={dragAndDrop}
+                    setDragAndDrop={setDragAndDrop}
+                />
+                {items.length > index + 1 && <Divider/>}
+              </>
             ))}
           </ItemsList>
 
-          {/*------------------ No Items Card Ends here-------------------------- */}
+          {/*------------------  Items Card Ends here-------------------------- */}
 
-          {/*------------------ Modal Starts here-------------------------- */}
-          {isDialogOpen && (
-            <ProductPicker closeDialog={() => setIsDialogOpen(false)} />
-          )}
-
-          {/*------------------ Modal Ends here-------------------------- */}
-
-          <AddProductBtn onClick={addItem}>
-            <AddProductBtnText>Add Product</AddProductBtnText>
+          <AddProductBtn 
+              onClick={addItem} 
+              marginLeft={addDiscountBtnState ? "18.65rem" : "15.3rem"} 
+              marginTop={addDiscountBtnState ? "43px" : "21px"}
+          >
+              <AddProductBtnText>Add Product</AddProductBtnText>
           </AddProductBtn>
         </MainContainer>
       </ProductListPage>
